@@ -1,0 +1,6 @@
+# Uptask Manager - Backend dependencies
+
+# Core Framework
+fastapi[standard]==0.115.13
+uvicorn==0.34.3
+starlette==0.46.2
