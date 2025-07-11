@@ -1,25 +1,18 @@
-from typing import Optional
-from pydantic import ConfigDict, field_validator
-from sqlmodel import SQLModel, Field
+# Validate data 
+from pydantic import ConfigDict
+from src.schemas.base import CleanStrModel
+from sqlmodel import Field
 
-class ProjectBase(SQLModel):
-  project_name: str
-  project_description: str
-  client_name: str
+class ProjectBase(CleanStrModel):
+  project_name: str = Field(min_length=3, max_length=255)
+  project_description: str = Field(min_length=3, max_length=255)
+  client_name: str = Field(min_length=3, max_length=255)
 
 class ProjectCreate(ProjectBase):
   pass
 
-class Project(ProjectBase, table=True):
-  id: Optional[int] = Field(default=None, primary_key=True)
+class ProjectResponse(ProjectBase):
+  id: int 
 
+  # Pydantic config
   model_config = ConfigDict(from_attributes=True)
-
-  @field_validator("project_name")
-  def project_name_with_no_blank_spaces(cls, v):
-    if v is not None:
-      v = v.strip()
-      if v == "":
-        raise ValueError("Project name cannot be blank")
-      return v
-    return v

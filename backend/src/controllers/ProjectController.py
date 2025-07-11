@@ -1,5 +1,7 @@
+# Validate business logic 
 import colorama
-from src.schemas.ProjectSchema import Project, ProjectCreate
+from src.schemas.ProjectSchema import ProjectCreate, ProjectResponse
+from src.models.Project import Project
 from src.core.db import AsyncSessionDependency
 from src.core.logging import logger
 
@@ -18,9 +20,12 @@ class ProjectController:
       await self.session.refresh(project)
 
       logger.info(f"{colorama.Fore.GREEN}Project created successfully: {project.project_name}✅{colorama.Style.RESET_ALL}")
-      return project
+      return {
+        "message": "Project created successfully",
+        "data": ProjectResponse.model_validate(project).model_dump(),
+        "status": "success"
+      }
     except Exception as e:
-      logger.error(f"{colorama.Fore.RED}Error creating project: {e}{colorama.Style.RESET_ALL}")
       raise e
 
   async def get_all_projects(self):

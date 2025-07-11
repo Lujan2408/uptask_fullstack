@@ -5,6 +5,7 @@ from src.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes.project_routes import api_router
 from src.core.middleware.logging_middleware import LoggingMiddleware
+from src.middleware.validation import validation_middleware
 
 # Create FastAPI app    
 app = FastAPI(lifespan=lifespan)
@@ -14,6 +15,9 @@ app.include_router(api_router, prefix="/api")
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
+
+# Add validation middleware
+app.middleware("http")(validation_middleware)
 
 # Add CORS middleware
 app.add_middleware(
