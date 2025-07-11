@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
 
+    # logging config
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "json"
+    LOG_FILE: str = "logs/app.log"
+    ENABLE_REQUEST_LOGGING: bool = True
+    ENABLE_SQL_LOGGING: bool = False
+
     model_config = ConfigDict(env_file=".env")
 
 settings = Settings()

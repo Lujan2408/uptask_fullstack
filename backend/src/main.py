@@ -4,12 +4,16 @@ from src.core.db import lifespan
 from src.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes.project_routes import api_router
+from src.core.middleware.logging_middleware import LoggingMiddleware
 
 # Create FastAPI app    
 app = FastAPI(lifespan=lifespan)
 
 # Include routes
 app.include_router(api_router, prefix="/api")
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
 
 # Add CORS middleware
 app.add_middleware(
@@ -21,7 +25,7 @@ app.add_middleware(
 )
 
 @app.get("/")
-async def root(): 
+async def root():
     return {"message": "Hello World"}
 
 if __name__ == "__main__":
