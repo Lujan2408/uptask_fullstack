@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, AsyncGenerator
 from colorama import Fore, Style
 
-# from src.models import *
+from src.models import *
 
 # Create async engine
 async_engine = create_async_engine(
