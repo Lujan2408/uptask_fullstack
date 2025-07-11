@@ -3,9 +3,13 @@ from fastapi import FastAPI
 from src.core.db import lifespan
 from src.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
+from src.routes.project_routes import api_router
 
 # Create FastAPI app    
 app = FastAPI(lifespan=lifespan)
+
+# Include routes
+app.include_router(api_router, prefix="/api/projects")
 
 # Add CORS middleware
 app.add_middleware(
