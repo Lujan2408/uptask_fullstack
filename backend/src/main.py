@@ -9,7 +9,7 @@ from src.routes.project_routes import api_router
 app = FastAPI(lifespan=lifespan)
 
 # Include routes
-app.include_router(api_router, prefix="/api/projects")
+app.include_router(api_router, prefix="/api")
 
 # Add CORS middleware
 app.add_middleware(

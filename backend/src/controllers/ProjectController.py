@@ -1,4 +1,3 @@
-# from src.models.Project import Project
 from src.core.db import AsyncSessionDependency
 
 class ProjectController:
