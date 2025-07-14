@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from sqlmodel import select
 import colorama
-from src.schemas.ProjectSchema import ProjectCreate, ProjectResponse
+from src.schemas.ProjectSchema import ProjectCreate, ProjectResponse, ProjectUpdate
 from src.models.Project import Project
 from src.core.db import AsyncSessionDependency
 from src.core.logging import logger
@@ -36,6 +36,7 @@ class ProjectController:
       
       projects = await self.session.execute(select(Project).order_by(Project.id.asc()))
       return projects.scalars().all()
+    
     except Exception as e:
       raise e
 
@@ -48,7 +49,55 @@ class ProjectController:
       if not project: 
         raise HTTPException(status_code=404, detail="Project not found or does not exist")
       
-      return ProjectResponse.model_validate(project).model_dump()
+      return project
     
     except Exception as e:
       raise e
+    
+  async def update_project(self, project_id: int, project_data: ProjectUpdate):
+    try:
+      logger.info(f"{colorama.Fore.YELLOW}Updating project: {colorama.Style.RESET_ALL}")
+
+      project = await self.session.get(Project, project_id)
+
+      if not project: 
+        raise HTTPException(status_code=404, detail="Project not found or does not exist")
+      
+      # Check if at least one field is provided to update the product
+      if not any([
+          project_data.project_name is not None,
+          project_data.project_description is not None,
+          project_data.client_name is not None
+      ]):
+        raise HTTPException(status_code=400, detail="At least one field must be provided to update the project")
+      
+      # check if already exists a project with the same name
+      if project_data.project_name and project_data.project_name != project.project_name:
+        existing_project = await self.session.execute(select(Project).where(Project.project_name == project_data.project_name))
+        if existing_project.scalars().first():
+          raise HTTPException(status_code=400, detail="A project with this name already exists")
+        
+       # Update only the fields that are provided (not None)
+      update_data = {}
+      if project_data.project_name is not None:
+          update_data["project_name"] = project_data.project_name
+      if project_data.project_description is not None:
+          update_data["project_description"] = project_data.project_description
+      if project_data.client_name is not None:
+          update_data["client_name"] = project_data.client_name
+
+      # Update the project only with the provided fields 
+      for field, value in update_data.items():
+        setattr(project, field, value)
+
+      self.session.add(project)
+      await self.session.commit()
+      await self.session.refresh(project)
+
+      return project
+    
+    except Exception as e:
+      raise e
+  
+      
+      

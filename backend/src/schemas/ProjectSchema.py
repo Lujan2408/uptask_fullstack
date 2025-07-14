@@ -1,4 +1,5 @@
 # Validate data 
+from typing import Optional
 from pydantic import ConfigDict
 from src.schemas.base import CleanStrModel
 from sqlmodel import Field
@@ -13,6 +14,11 @@ class ProjectCreate(ProjectBase):
 
 class ProjectResponse(ProjectBase):
   id: int 
+
+class ProjectUpdate(ProjectBase):
+  project_name: Optional[str] = Field(default=None)
+  project_description: Optional[str] = Field(default=None)
+  client_name: Optional[str] = Field(default=None)
 
   # Pydantic config
   model_config = ConfigDict(from_attributes=True)
