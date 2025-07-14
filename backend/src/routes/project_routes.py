@@ -15,3 +15,8 @@ async def create_project(project_data: ProjectCreate, session: AsyncSessionDepen
 async def get_all_projects(session: AsyncSessionDependency):
   project_controller = ProjectController(session)
   return await project_controller.get_all_projects()
+
+@api_router.get("/{project_id}")
+async def get_project_by_id(project_id: int, session: AsyncSessionDependency):
+   project_controller = ProjectController(session)
+   return await project_controller.get_project_by_id(project_id)
