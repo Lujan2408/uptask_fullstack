@@ -1,4 +1,5 @@
 # Validate business logic 
+from sqlmodel import select
 import colorama
 from src.schemas.ProjectSchema import ProjectCreate, ProjectResponse
 from src.models.Project import Project
@@ -29,4 +30,10 @@ class ProjectController:
       raise e
 
   async def get_all_projects(self):
-    return "Getting all projects"
+    try: 
+      logger.info(f"{colorama.Fore.YELLOW}Getting all projects{colorama.Style.RESET_ALL}")
+      
+      projects = await self.session.execute(select(Project).order_by(Project.id.asc()))
+      return projects.scalars().all()
+    except Exception as e:
+      raise e
