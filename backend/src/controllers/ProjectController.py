@@ -1,11 +1,21 @@
 # Validate business logic 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlmodel import select
-import colorama
+
 from src.schemas.ProjectSchema import ProjectCreate, ProjectResponse, ProjectUpdate
 from src.models.Project import Project
 from src.core.db import AsyncSessionDependency
 from src.core.logging import logger
+
+from src.errors.project_errors import (
+  ProjectNotFoundError, 
+  ProjectNameTooShortError, 
+  DuplicateProjectNameError, 
+  NoFieldsToUpdateError
+
+)
+import colorama
+
 
 class ProjectController:
   def __init__(self, session: AsyncSessionDependency):
@@ -15,9 +25,16 @@ class ProjectController:
     try: 
       logger.info(f"Creating project: {colorama.Fore.YELLOW}{project_data.project_name}{colorama.Style.RESET_ALL}")
     
+      # Validate project name length
       if len(project_data.project_name) < 3: 
-        raise HTTPException(status_code=400, detail="Project name must be at least 3 characters long")
+        raise ProjectNameTooShortError("Project name must be at least 3 characters long")
+      
+      # Check if a project already exists with the same name
+      existing_project = await self.session.execute(select(Project).where(Project.project_name == project_data.project_name))
+      if existing_project.scalars().first(): 
+        raise DuplicateProjectNameError("A project with this name already exists")
 
+      # Create the project object
       project_data_dict = project_data.model_dump()
       project = Project(**project_data_dict) # Project object that will be created in the database
       self.session.add(project)
@@ -27,9 +44,14 @@ class ProjectController:
       logger.info(f"{colorama.Fore.GREEN}Project created successfully: {project.project_name}✅{colorama.Style.RESET_ALL}")
       return {
         "message": "Project created successfully",
-        "data": ProjectResponse.model_validate(project).model_dump(),
+        "data": project.model_dump(),
         "status": "success"
       }
+    
+    except ProjectNameTooShortError as e:
+      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DuplicateProjectNameError as e:
+      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
       raise e
 
@@ -38,8 +60,14 @@ class ProjectController:
       logger.info(f"{colorama.Fore.YELLOW}Getting all projects{colorama.Style.RESET_ALL}")
       
       projects = await self.session.execute(select(Project).order_by(Project.id.asc()))
+      # Check if no projects were found
+      if not projects.scalars().all(): 
+        raise ProjectNotFoundError("No projects found")
+      
       return projects.scalars().all()
     
+    except ProjectNotFoundError as e:
+      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
       raise e
 
@@ -50,10 +78,12 @@ class ProjectController:
       project = await self.session.get(Project, project_id)
       
       if not project: 
-        raise HTTPException(status_code=404, detail="Project not found or does not exist")
+        raise ProjectNotFoundError("Project not found or does not exist")
       
       return project
     
+    except ProjectNotFoundError as e:
+      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
       raise e
     
@@ -64,7 +94,7 @@ class ProjectController:
       project = await self.session.get(Project, project_id)
 
       if not project: 
-        raise HTTPException(status_code=404, detail="Project not found or does not exist")
+        raise ProjectNotFoundError("Project not found or does not exist")
       
       # Check if at least one field is provided to update the product
       if not any([
@@ -72,13 +102,13 @@ class ProjectController:
           project_data.project_description is not None,
           project_data.client_name is not None
       ]):
-        raise HTTPException(status_code=400, detail="At least one field must be provided to update the project")
+        raise NoFieldsToUpdateError("At least one field must be provided to update the project")
       
       # check if already exists a project with the same name
       if project_data.project_name and project_data.project_name != project.project_name:
         existing_project = await self.session.execute(select(Project).where(Project.project_name == project_data.project_name))
         if existing_project.scalars().first():
-          raise HTTPException(status_code=400, detail="A project with this name already exists")
+          raise DuplicateProjectNameError("A project with this name already exists")
         
        # Update only the fields that are provided (not None)
       update_data = {}
@@ -99,8 +129,12 @@ class ProjectController:
 
       return project
     
+    except ProjectNotFoundError as e:
+      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except NoFieldsToUpdateError as e:
+      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DuplicateProjectNameError as e:
+      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
       raise e
-  
-      
-      
+
