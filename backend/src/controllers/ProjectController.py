@@ -15,6 +15,9 @@ class ProjectController:
     try: 
       logger.info(f"Creating project: {colorama.Fore.YELLOW}{project_data.project_name}{colorama.Style.RESET_ALL}")
     
+      if len(project_data.project_name) < 3: 
+        raise HTTPException(status_code=400, detail="Project name must be at least 3 characters long")
+
       project_data_dict = project_data.model_dump()
       project = Project(**project_data_dict) # Project object that will be created in the database
       self.session.add(project)
