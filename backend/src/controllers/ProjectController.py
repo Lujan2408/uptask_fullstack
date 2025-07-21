@@ -2,7 +2,7 @@
 from fastapi import HTTPException, status
 from sqlmodel import select
 
-from src.schemas.ProjectSchema import ProjectCreate, ProjectUpdate
+from src.schemas.projects.ProjectSchema import ProjectCreate, ProjectUpdate
 from src.models.projects.Project import Project
 from src.core.db import AsyncSessionDependency
 from src.core.logging import logger
