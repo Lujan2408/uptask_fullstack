@@ -60,11 +60,13 @@ class ProjectController:
       logger.info(f"{colorama.Fore.YELLOW}Getting all projects{colorama.Style.RESET_ALL}")
       
       projects = await self.session.execute(select(Project).order_by(Project.id.asc()))
+      projects_list = projects.scalars().all()
+      
       # Check if no projects were found
-      if not projects.scalars().all(): 
+      if not projects_list: 
         raise ProjectNotFoundError("No projects found")
       
-      return projects.scalars().all()
+      return projects_list
     
     except ProjectNotFoundError as e:
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
