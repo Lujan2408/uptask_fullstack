@@ -2,6 +2,9 @@ from __future__ import annotations
 from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
+from sqlalchemy import Column
+from sqlalchemy.types import DateTime as SQLAlchemyDateTime
+from src.helpers.format_date import now_without_microseconds
 
 if TYPE_CHECKING:
   from ..tasks.Tasks import Task
@@ -19,11 +22,13 @@ class Project(SQLModel, table=True):
       project_description: Detailed description of the project
       client_name: Name of the client (indexed for faster queries)
       tasks: One-to-many relationship with Task objects
+      created_at: Timestamp for when the project was created
+      updated_at: Timestamp for when the project was last updated
   """
   id: Optional[int] = Field(default=None, primary_key=True)
   project_name: str = Field(index=True, min_length=3, max_length=255)
   project_description: str = Field(min_length=3, max_length=255)
   client_name: str = Field(index=True, min_length=3, max_length=255)
   tasks: List["Task"] = Relationship(back_populates="project")
-  created_at: datetime = Field(default_factory=datetime.now)
-  updated_at: datetime = Field(default_factory=datetime.now)
+  created_at: datetime = Field(default_factory=now_without_microseconds, sa_column=Column(SQLAlchemyDateTime, default=now_without_microseconds))
+  updated_at: datetime = Field(default_factory=now_without_microseconds, sa_column=Column(SQLAlchemyDateTime, default=now_without_microseconds, onupdate=now_without_microseconds))
