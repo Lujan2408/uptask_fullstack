@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 from src.controllers.ProjectController import ProjectController
 from src.core.db import AsyncSessionDependency
-from src.schemas.projects.ProjectSchema import ProjectCreate, ProjectUpdate
+from src.schemas.ProjectSchema import ProjectCreate, ProjectUpdate
 
 api_router = APIRouter(prefix="/projects", tags=["projects"])
 

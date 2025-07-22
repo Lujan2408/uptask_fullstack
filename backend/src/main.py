@@ -10,6 +10,9 @@ from src.middleware.validation import validation_middleware
 # Create FastAPI app    
 app = FastAPI(lifespan=lifespan)
 
+# Include routes
+app.include_router(api_router, prefix="/api")
+
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
@@ -28,9 +31,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-# Include routes
-app.include_router(api_router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
