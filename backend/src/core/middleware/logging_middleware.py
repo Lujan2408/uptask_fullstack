@@ -1,11 +1,8 @@
 import time
-import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from src.core.config import settings
-import colorama
-
-logger = logging.getLogger("app")
+from src.core.logging import logger, LogColors
 
 class LoggingMiddleware(BaseHTTPMiddleware):
   async def dispatch(self, request: Request, call_next):
@@ -15,9 +12,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     # Start timer
     start_time = time.time()
 
-    # Log of request
+    # Log request start
     logger.info(
-      f"Request Started: {colorama.Fore.YELLOW}{request.method} {request.url.path} {colorama.Style.RESET_ALL}",
+      f"Request Started: {LogColors.YELLOW}{request.method} {request.url.path}{LogColors.RESET}",
       extra={
         "method": request.method,
         "path": request.url.path,
@@ -33,9 +30,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     # Calculate response time
     response_time = (time.time() - start_time) * 1000
 
-    # Log of response
+    # Log response completion
     logger.info(
-      f"Request Completed: {colorama.Fore.YELLOW}{request.method} {request.url.path} {colorama.Style.RESET_ALL} - {colorama.Fore.GREEN}{response.status_code} {colorama.Style.RESET_ALL} in {colorama.Fore.YELLOW}{response_time:.2f}ms {colorama.Style.RESET_ALL}",
+      f"Request Completed: {LogColors.YELLOW}{request.method} {request.url.path}{LogColors.RESET} - {LogColors.GREEN}{response.status_code}{LogColors.RESET} in {LogColors.YELLOW}{response_time:.2f}ms{LogColors.RESET}",
       extra={
         "method": request.method,
         "path": request.url.path,

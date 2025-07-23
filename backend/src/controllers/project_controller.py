@@ -5,16 +5,17 @@ from sqlmodel import select
 from src.schemas.ProjectSchema import ProjectCreate, ProjectUpdate
 from src.models.models import Project
 from src.core.db import AsyncSessionDependency
-from src.core.logging import logger
+from src.core.logging import (
+    log_operation_start,
+    log_operation_success,
+    log_entity_created,
+    log_entity_updated
+)
 
 from src.errors.project_errors import (
-  ProjectNotFoundError, 
-  ProjectNameTooShortError, 
-  DuplicateProjectNameError, 
+  ProjectNotFoundError,
   NoFieldsToUpdateError
-
 )
-import colorama
 
 
 class ProjectController:
@@ -23,17 +24,8 @@ class ProjectController:
 
   async def create_project(self, project_data: ProjectCreate):
     try: 
-      logger.info(f"Creating project: {colorama.Fore.YELLOW}{project_data.project_name}{colorama.Style.RESET_ALL}")
+      log_operation_start("Creating project", project_data.project_name)
     
-      # Validate project name length
-      if len(project_data.project_name) < 3: 
-        raise ProjectNameTooShortError("Project name must be at least 3 characters long")
-      
-      # Check if a project already exists with the same name
-      existing_project = await self.session.execute(select(Project).where(Project.project_name == project_data.project_name))
-      if existing_project.scalars().first(): 
-        raise DuplicateProjectNameError("A project with this name already exists")
-
       # Create the project object
       project_data_dict = project_data.model_dump()
       project = Project(**project_data_dict) # Project object that will be created in the database
@@ -41,23 +33,20 @@ class ProjectController:
       await self.session.commit()
       await self.session.refresh(project)
 
-      logger.info(f"{colorama.Fore.GREEN}Project created successfully: {project.project_name}✅{colorama.Style.RESET_ALL}")
+      log_entity_created("Project", project.project_name, project.id)
+      
       return {
         "message": "Project created successfully",
         "data": project.model_dump(),
         "status": "success"
       }
     
-    except ProjectNameTooShortError as e:
-      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except DuplicateProjectNameError as e:
-      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
       raise e
 
   async def get_all_projects(self):
-    try: 
-      logger.info(f"{colorama.Fore.YELLOW}Getting all projects{colorama.Style.RESET_ALL}")
+    try:
+      log_operation_start("Getting all projects")
       
       projects = await self.session.execute(select(Project).order_by(Project.id.asc()))
       projects_list = projects.scalars().all()
@@ -66,6 +55,7 @@ class ProjectController:
       if not projects_list: 
         raise ProjectNotFoundError("No projects found")
       
+      log_operation_success("Getting all projects")
       return projects_list
     
     except ProjectNotFoundError as e:
@@ -73,46 +63,47 @@ class ProjectController:
     except Exception as e:
       raise e
 
-  async def get_project_by_id(self, project_id: int):
+  async def get_project_by_id(self, project: Project):
+    """
+    Get project by ID. Project is already validated by middleware.
+    
+    Args:
+        project: Project object validated by middleware
+        
+    Returns:
+        Project: The project object
+    """
     try: 
-      logger.info(f"{colorama.Fore.YELLOW}Getting project by id: {colorama.Style.RESET_ALL}")
-
-      project = await self.session.get(Project, project_id)
-      
-      if not project: 
-        raise ProjectNotFoundError("Project not found or does not exist")
-      
+      log_operation_start("Getting project by ID", f"ID: {project.id}")
+      log_operation_success("Getting project by ID", project.project_name)
       return project
     
-    except ProjectNotFoundError as e:
-      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
       raise e
     
-  async def update_project(self, project_id: int, project_data: ProjectUpdate):
+  async def update_project(self, project: Project, project_data: ProjectUpdate):
+    """
+    Update project. Project is already validated by middleware.
+    
+    Args:
+        project: Project object validated by middleware
+        project_data: Data to update the project
+        
+    Returns:
+        Project: The updated project object
+    """
     try:
-      logger.info(f"{colorama.Fore.YELLOW}Updating project: {colorama.Style.RESET_ALL}")
-
-      project = await self.session.get(Project, project_id)
-
-      if not project: 
-        raise ProjectNotFoundError("Project not found or does not exist")
+      log_operation_start("Updating project", f"ID: {project.id}")
       
-      # Check if at least one field is provided to update the product
+      # Check if at least one field is provided to update the project
       if not any([
           project_data.project_name is not None,
           project_data.project_description is not None,
           project_data.client_name is not None
       ]):
         raise NoFieldsToUpdateError("At least one field must be provided to update the project")
-      
-      # check if already exists a project with the same name
-      if project_data.project_name and project_data.project_name != project.project_name:
-        existing_project = await self.session.execute(select(Project).where(Project.project_name == project_data.project_name))
-        if existing_project.scalars().first():
-          raise DuplicateProjectNameError("A project with this name already exists")
         
-       # Update only the fields that are provided (not None)
+      # Update only the fields that are provided (not None)
       update_data = {}
       if project_data.project_name is not None:
           update_data["project_name"] = project_data.project_name
@@ -129,13 +120,10 @@ class ProjectController:
       await self.session.commit()
       await self.session.refresh(project)
 
+      log_entity_updated("Project", project.project_name, project.id)
       return project
     
-    except ProjectNotFoundError as e:
-      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except NoFieldsToUpdateError as e:
-      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except DuplicateProjectNameError as e:
       raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
       raise e

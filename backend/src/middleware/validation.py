@@ -26,5 +26,5 @@ async def validation_middleware(request: Request, call_next: Callable):
         raise HTTPException(status_code=400, detail="User-Agent header is required")
     
     # Continue with the request if all validations pass
-    response = await call_next(request)
-    return response
+    return await call_next(request)
+    

@@ -5,7 +5,7 @@ from src.core.config import settings
 from fastapi import Depends
 from contextlib import asynccontextmanager
 from typing import Annotated, AsyncGenerator
-from colorama import Fore, Style
+from src.core.logging import log_database_connection, log_service_startup
 
 from src.models.models import Project, TaskStatus, Task
 
@@ -26,11 +26,12 @@ AsyncSessionLocal = async_sessionmaker(
 async def create_db_and_tables():
   async with async_engine.begin() as connection: 
     await connection.run_sync(SQLModel.metadata.create_all)
-    print(Fore.GREEN + "Successfully connected to database ✅" + Style.RESET_ALL)
+    log_database_connection("PostgreSQL", "success")
 
 @asynccontextmanager
 async def lifespan(app): 
   await create_db_and_tables()
+  log_service_startup("UpTask API")
   yield
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]: 
