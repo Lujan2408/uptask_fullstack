@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status
-from src.controllers.ProjectController import ProjectController
+
+from src.controllers.project_controller import ProjectController
 from src.core.db import AsyncSessionDependency
 from src.schemas.ProjectSchema import ProjectCreate, ProjectUpdate
 

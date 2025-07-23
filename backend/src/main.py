@@ -4,14 +4,21 @@ from src.core.db import lifespan
 from src.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes.project_routes import api_router
+from src.routes.task_routes import api_router as task_api_router
 from src.core.middleware.logging_middleware import LoggingMiddleware
 from src.middleware.validation import validation_middleware
 
 # Create FastAPI app    
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan, 
+    title="UpTask API", 
+    description="API for the UpTask project", 
+    version="0.1.0",
+) 
 
 # Include routes
 app.include_router(api_router, prefix="/api")
+app.include_router(task_api_router, prefix="/api")
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
