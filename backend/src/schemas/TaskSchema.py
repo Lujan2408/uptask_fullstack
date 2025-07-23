@@ -1,6 +1,6 @@
 from typing import Optional
-from pydantic import ConfigDict, field_validator
-from src.schemas.base import CleanStrModel
+from pydantic import ConfigDict
+from src.schemas.base import CleanStrModel, TaskValidators
 from sqlmodel import Field
 from src.models.models import TaskStatus
 
@@ -9,7 +9,7 @@ class TaskBase(CleanStrModel):
   task_description: str = Field(min_length=3, max_length=255)
   status: TaskStatus = Field(default=TaskStatus.PENDING)
 
-class TaskCreate(TaskBase):
+class TaskCreate(TaskBase, TaskValidators):
    pass
 
 class TaskResponse(TaskBase):
@@ -18,24 +18,10 @@ class TaskResponse(TaskBase):
   created_at: str
   updated_at: str
 
-class TaskUpdate(CleanStrModel):
+class TaskUpdate(TaskBase, TaskValidators):
   task_name: Optional[str] = Field(default=None, min_length=3, max_length=255)
   task_description: Optional[str] = Field(default=None, min_length=3, max_length=255)
   status: Optional[TaskStatus] = Field(default=None)
-
-  @field_validator('task_name')
-  @classmethod
-  def validate_task_name(cls, v):
-      if v is not None and len(v) < 3:
-          raise ValueError("Task name must be at least 3 characters long")
-      return v
-
-  @field_validator('task_description')
-  @classmethod
-  def validate_task_description(cls, v):
-      if v is not None and len(v) < 3:
-          raise ValueError("Task description must be at least 3 characters long")
-      return v
 
   # Pydantic config
   model_config = ConfigDict(from_attributes=True)
