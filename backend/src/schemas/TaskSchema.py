@@ -10,7 +10,7 @@ class TaskBase(CleanStrModel):
   status: TaskStatus = Field(default=TaskStatus.PENDING)
 
 class TaskCreate(TaskBase):
-  project_id: int
+   pass
 
 class TaskResponse(TaskBase):
   id: int
